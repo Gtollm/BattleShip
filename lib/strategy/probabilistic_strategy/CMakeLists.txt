@@ -1,0 +1,3 @@
+add_library(probabilistic_strategy probabilistic_strategy.cpp probabilistic_strategy.hpp)
+
+target_include_directories(probabilistic_strategy PUBLIC ${PROJECT_SOURCE_DIR})

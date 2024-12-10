@@ -11,6 +11,7 @@
 
 #include "lib/field/field.hpp"
 #include "lib/matrix/abstract_matrix.hpp"
+#include "lib/packed_data/packed_matrix.hpp"
 
 namespace BattleShipGame {
 template <typename T>

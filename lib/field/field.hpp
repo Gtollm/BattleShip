@@ -33,7 +33,7 @@ class AbstractField {
                                                std::size_t col) const = 0;
 
   virtual void SetCellState(std::size_t row, std::size_t col,
-                            CellState state) = 0;
+                            CellState state)  = 0;
 
   virtual std::vector<Coord> Neighbours(Coord coord) const = 0;
 

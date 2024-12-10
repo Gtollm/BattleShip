@@ -1,0 +1,8 @@
+add_subdirectory(game)
+add_subdirectory(game_manager)
+add_subdirectory(field)
+add_subdirectory(matrix)
+add_subdirectory(packed_data)
+add_subdirectory(commands)
+add_subdirectory(strategy)
+add_subdirectory(writer)

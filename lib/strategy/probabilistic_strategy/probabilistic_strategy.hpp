@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "lib/field/field.hpp"
-#include "lib/field/matrix_field/matrix_opponent_field.hpp"
 #include "lib/strategy/strategy.hpp"
 
 namespace BattleShipGame {
@@ -26,7 +25,9 @@ class ProbabilisticStrategy : public Strategy {
   void SetShootingResult(CellState result) override;
 
   void SetField(std::shared_ptr<AbstractOpponentField> field) override;
-
+  void CalculateProbabilitiesForLength(
+      std::size_t length, std::vector<std::vector<bool>>& valid_shots,
+      std::vector<std::int64_t>& probabilities);
   bool GameWon() override;
 
  private:

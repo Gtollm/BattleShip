@@ -22,5 +22,6 @@ class OrderedStrategy final : public Strategy {
  private:
   Coord last_shot_;
   std::shared_ptr<AbstractOpponentField> field_;
+  bool first_call_ = true;
 };
 }  // namespace BattleShipGame

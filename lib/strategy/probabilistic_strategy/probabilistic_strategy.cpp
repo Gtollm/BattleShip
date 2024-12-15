@@ -1,4 +1,4 @@
-
+#include "lib/field/matrix_field/matrix_field.hpp"
 #include "probabilistic_strategy.hpp"
 
 namespace BattleShipGame {
@@ -14,64 +14,86 @@ Coord ProbabilisticStrategy::GetShootingCoords() {
     }
     first_call_ = false;
   }
-  std::vector<std::int64_t> probabilities(
-      this->field_->Width() * this->field_->Height(), 0);
+  utils::VectorMatrix<std::int64_t> probabilities(this->field_->Height(),
+                                                  this->field_->Width());
+
   for (auto& [length, count] : remaining_ships_) {
     for (std::size_t row = 0; row < this->field_->Height(); ++row) {
-      std::vector<bool> mask(this->field_->Width(), true);
+      std::vector<bool> mask(this->field_->Width(), false);
       for (std::size_t col = 0; col < this->field_->Width(); ++col) {
-        CellState state = field_->GetCellState(row, col);
-        if (state == CellState::KILL || state == CellState::WATER) {
-          mask[col] = 1;
+        if (field_->GetCellState(row, col) == CellState::UNSPECIFIED ||
+            field_->GetCellState(row, col) == CellState::SHIP) {
+          mask[col] = true;
         }
-      }
-      std::vector<std::int64_t> prefix(this->field_->Width(), 0);
-      for (std::size_t i = 0; i < this->field_->Width(); ++i) {
-        prefix[i] = mask[i] + (i > 0 ? prefix[i - 1] : 0);
       }
       for (std::size_t start = 0; start <= this->field_->Width() - length;
            ++start) {
-        if (prefix[start + length - 1] -
-                (start > 0 ? prefix[start - 1] : 0) ==
-            length) {
-          for (std::size_t offset = 0; offset < length; ++offset) {
-            probabilities[row * this->field_->Width() + start + offset]++;
+        bool valid = true;
+        for (std::size_t i = start; i < start + length; ++i) {
+          if (!mask[i]) {
+            valid = false;
+            break;
+          }
+        }
+        if (valid) {
+          for (std::size_t i = start; i < start + length; ++i) {
+            probabilities[row][i]++;
           }
         }
       }
     }
     for (std::size_t col = 0; col < this->field_->Width(); ++col) {
-      std::vector<std::int64_t> mask(this->field_->Height(), 0);
+      std::vector<bool> mask(this->field_->Height(), false);
       for (std::size_t row = 0; row < this->field_->Height(); ++row) {
-        if (field_->GetCellState(row, col) == CellState::WATER ||
+        if (field_->GetCellState(row, col) == CellState::UNSPECIFIED ||
             field_->GetCellState(row, col) == CellState::SHIP) {
-          mask[row] = 1;
+          mask[row] = true;
         }
-      }
-      std::vector<std::int64_t> prefix(this->field_->Height(), 0);
-      for (std::size_t i = 0; i < this->field_->Height(); ++i) {
-        prefix[i] = mask[i] + (i > 0 ? prefix[i - 1] : 0);
       }
       for (std::size_t start = 0; start <= this->field_->Height() - length;
            ++start) {
-        if (prefix[start + length - 1] -
-                (start > 0 ? prefix[start - 1] : 0) ==
-            length) {
-          for (std::size_t offset = 0; offset < length; ++offset) {
-            probabilities[(start + offset) * this->field_->Width() + col]++;
+        bool valid = true;
+        for (std::size_t i = start; i < start + length; ++i) {
+          if (!mask[i]) {
+            valid = false;
+            break;
+          }
+        }
+        if (valid) {
+          for (std::size_t i = start; i < start + length; ++i) {
+            ++probabilities[i][col];
           }
         }
       }
     }
   }
-  int max_prob = -1;
-  Coord best(-1, -1);
+  for (std::size_t i = 0; i < this->field_->Height(); ++i) {
+    for (std::size_t j = 0; j < this->field_->Width(); ++j) {
+      if (field_->GetCellState(i, j) == CellState::SHIP) {
+        for (auto& [x, y] : this->field_->Neighbours({j, i})) {
+          if (this->field_->GetCellState(y, x) == CellState::UNSPECIFIED) {
+            probabilities[y][x] = std::numeric_limits<std::int64_t>::max();
+          }
+        }
+        probabilities[i][j] = 0;
+      } else if (field_->GetCellState(i, j) == CellState::KILL) {
+        for (auto& [x_ship, y_ship] : this->field_->FullShip({j, i})) {
+          for (auto& [x, y] : this->field_->Neighbours({x_ship, y_ship})) {
+            probabilities[y][x] = 0;
+          }
+        }
+      }
+    }
+  }
+
+  std::int64_t max_prob = 0;
+  Coord best(0, 0);
   for (std::size_t row = 0; row < this->field_->Height(); ++row) {
     for (std::size_t col = 0; col < this->field_->Width(); ++col) {
-      if (field_->GetCellState(row, col) == CellState::WATER &&
-          probabilities[row * this->field_->Width() + col] > max_prob) {
-        max_prob = probabilities[row * this->field_->Width() + col];
-        best = Coord(row, col);
+      if (field_->GetCellState(row, col) == CellState::UNSPECIFIED &&
+          probabilities[row][col] > max_prob) {
+        max_prob = probabilities[row][col];
+        best = Coord(col, row);
       }
     }
   }
@@ -101,6 +123,7 @@ void ProbabilisticStrategy::SetShootingResult(CellState result) {
 void ProbabilisticStrategy::SetField(
     std::shared_ptr<AbstractOpponentField> field) {
   this->field_ = field;
+  this->first_call_ = true;
 }
 
 bool ProbabilisticStrategy::GameWon() {

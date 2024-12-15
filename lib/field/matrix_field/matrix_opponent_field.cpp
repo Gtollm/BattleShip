@@ -31,6 +31,7 @@ inline void MatrixOpponentField::RecordShot(std::size_t x, std::size_t y,
     this->data_[y][x] = result;
   }
   if (result == CellState::KILL) {
+    this->data_[y][x] = result;
     auto ship = this->FullShip({x, y});
     for (const auto part : ship) {
       this->data_[part.y][part.x] = result;

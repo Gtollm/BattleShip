@@ -22,8 +22,9 @@ concept IsVectorLikeContainer =
       { a.end() };
       { a[i] };
     };
-
-template <typename T, template <typename> class Container = std::vector>
+template <typename T>
+using VectorWrapper = std::vector<T>;
+template <typename T, template <typename> class Container = VectorWrapper>
   requires IsVectorLikeContainer<Container<T> >
 class VectorMatrix : public AbstractMatrix<T> {
  public:

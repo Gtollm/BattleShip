@@ -9,6 +9,10 @@ OrderedStrategy::OrderedStrategy(
     : field_(field) {}
 
 Coord OrderedStrategy::GetShootingCoords() {
+  if (this->first_call_) {
+    this->first_call_ = false;
+    return this->last_shot_;
+  }
   if (this->last_shot_.x + 1 < this->field_->Width()) {
     ++this->last_shot_.x;
   } else if (this->last_shot_.y + 1 < this->field_->Height()) {
